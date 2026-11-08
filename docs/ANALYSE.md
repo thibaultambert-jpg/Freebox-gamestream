@@ -6,6 +6,21 @@ Ce document passe en revue le plan initial. Pour chaque point, il dit ce qui tie
 
 ---
 
+## 0. En vidéo seule : existe-t-il déjà une solution ?
+
+Si la manette est branchée au PC et que le Player n'affiche que l'image, voici ce qui existe déjà :
+
+| Solution existante | Ce que c'est | Pour jouer ? |
+|---|---|---|
+| Moonlight, Steam Link, Parsec, Chromecast | Clients de streaming de jeu | ❌ Indisponibles sur le Player Devialet |
+| Recopie d'écran AirPlay / AirMedia | Fonctionne sur le Delta, depuis un appareil Apple ou un logiciel émetteur AirPlay sur PC | ❌ 1 à 3 s de latence selon les tests publiés ([Univers Freebox](https://www.universfreebox.com/article/47881/Freebox-Delta-test-de-la-fonction-AirPlay-ca-fonctionne-plutot-bien/amp), [iPhoneSoft](https://iphonesoft.fr/2018/12/27/freebox-delta-airplay-fonctionne-recopie-d-ecran)) |
+| UPnP/DLNA (« Diffuser vers l'appareil », serveurs multimédias) | Le Player lit des fichiers ou flux poussés | ❌ Plusieurs secondes de tampon, pensé pour des films |
+| **API AirMedia de Freebox OS** ([doc officielle](https://dev.freebox.fr/sdk/os/airmedia)) | Un programme envoie une URL vidéo au lecteur natif | ✅ **Seule brique réutilisable** |
+
+**Il n'existe donc pas de solution clé en main à faible latence.** En revanche, on peut combiner l'API AirMedia avec l'agent : FFmpeg en basse latence, puis l'URL envoyée au Player. C'est le **mode express** (`--cast`, voir `docs/TUTO.md`). Il supprime l'app QML, Qt Creator et le mode développeur. Sa latence est celle du lecteur natif, inconnue tant qu'elle n'a pas été mesurée : c'est la première chose à mesurer. Si elle est trop élevée, l'app QML reste à essayer avant le plan B.
+
+---
+
 ## 1. Verdict rapide
 
 | Point du plan | Avis | Changement apporté |

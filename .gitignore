@@ -9,3 +9,4 @@ agent-pc/probe-results/
 *.jsc
 build-*/
 *.user
+agent-pc/.freebox_token.json

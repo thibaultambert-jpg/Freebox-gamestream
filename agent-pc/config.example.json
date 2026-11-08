@@ -44,5 +44,10 @@
       "Menu"
     ],
     "back_long_press_ms": 1500
+  },
+  "freebox": {
+    "host": "http://mafreebox.freebox.fr",
+    "receiver": "Freebox Player",
+    "receiver_password": ""
   }
 }

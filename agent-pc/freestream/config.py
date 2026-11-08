@@ -114,6 +114,12 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "profile": "manette",
         "profiles": DEFAULT_PROFILES,
     },
+    "freebox": {
+        # Mode vidéo seule (AirMedia) : adresse de Freebox OS et nom du récepteur
+        "host": "http://mafreebox.freebox.fr",
+        "receiver": "Freebox Player",
+        "receiver_password": "",   # si un mot de passe AirMedia est défini sur le Player
+    },
     "app": {
         # Touches qui ouvrent le menu pause dans l'app (non transmises au PC)
         "pause_keys": ["Menu"],

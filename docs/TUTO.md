@@ -6,6 +6,55 @@ Ce tutoriel vous guide pas à pas, de l'installation jusqu'à la première parti
 
 > **Intitulés à vérifier.** Les noms exacts des menus du Player et de Qt Creator peuvent varier selon les versions. En cas de doute, la référence est la doc officielle du SDK : <https://dev.freebox.fr/sdk/player.html>.
 
+> **Vous voulez seulement l'image du PC sur la TV, avec la manette branchée au PC ?** Commencez par le [mode express AirMedia](#mode-express--vidéo-seule-sans-app-airmedia) : pas d'app à installer, pas de Qt Creator, pas de mode développeur. Comptez 10 minutes. Le reste du tutoriel ne sert que si vous voulez piloter le PC avec la télécommande, ou si le lecteur natif est trop lent.
+
+---
+
+## Mode express : vidéo seule, sans app (AirMedia)
+
+Freebox OS fournit une API officielle, **AirMedia**, qui permet à un programme d'envoyer une adresse vidéo au **lecteur natif** du Player. L'agent s'en sert : il capture l'écran, encode le flux, puis demande au Player de le lire.
+
+**Ce qui est vérifié :** l'agent, le client Freebox OS et l'arrêt propre fonctionnent, testés contre une simulation de Freebox OS. **Ce qui reste à mesurer sur votre matériel :** les formats que le lecteur natif accepte (HTTP ? UDP ?) et sa latence.
+
+### Étapes
+
+1. **Installez l'agent** : §2.1 à §2.3 ci-dessous (Python, FFmpeg, `install.ps1`). ViGEmBus est inutile dans ce mode.
+2. **Activez AirMedia sur le Player** : dans ses réglages, option *AirMedia* ou « Autoriser AirMedia ». L'intitulé peut varier selon le firmware. Allumez le Player.
+3. **Appairez l'agent avec Freebox OS** (une seule fois) :
+
+   ```bat
+   scripts\cast.bat pair
+   ```
+
+   L'écran de la **Freebox Server** affiche une demande « FreeStream » : **acceptez-la** avec les boutons ou l'écran tactile de la façade. Le jeton est enregistré dans `agent-pc\.freebox_token.json`.
+   * Si une erreur « droits insuffisants » apparaît plus tard : dans Freebox OS (<http://mafreebox.freebox.fr>), ouvrez *Paramètres de la Freebox → Gestion des accès → Applications* et cochez les permissions de FreeStream.
+4. **Testez les formats acceptés** par le lecteur natif, avec une mire de test :
+
+   ```bat
+   scripts\cast.bat test --player-ip 192.168.1.20
+   ```
+
+   Pour chaque transport (HTTP, UDP, RTP, multicast), l'agent envoie la mire au Player puis vous demande si elle s'affiche sur la TV, et le retard approximatif du compteur. L'IP du Player permet de tester aussi l'UDP et le RTP en unicast ; sans elle, seuls le multicast et l'HTTP sont essayés. Le rapport est enregistré dans `agent-pc\probe-results\airmedia-….json`.
+5. **Diffusez l'écran** avec le transport qui a marché :
+
+   ```bat
+   scripts\cast.bat                 REM HTTP (défaut)
+   scripts\cast.bat udp-multicast   REM ou un autre transport accepté
+   scripts\cast.bat udp --player-ip 192.168.1.20
+   ```
+
+   **Ctrl+C** dans la console arrête la lecture sur le Player et le flux sur le PC.
+6. **Branchez la manette au PC** (§10), lancez le jeu ou Steam Big Picture.
+7. **Mesurez la latence** avec la page `/clock` (§7.1) et décidez :
+
+| Latence mesurée | Décision |
+|---|---|
+| < 150 ms | Parfait : restez en mode express |
+| 150–250 ms | Jouable pour les jeux lents. Essayez un autre transport, le mode Jeu de la TV, 60 i/s. Comparez avec l'app QML (§3 à §6), dont le lecteur peut se comporter autrement |
+| > 250 ms | Le lecteur natif met trop d'images en tampon : essayez l'app QML, sinon passez au plan B (`docs/ANALYSE.md` §7) |
+
+Options utiles : `--receiver "Nom"` si le Player porte un autre nom dans AirMedia, `--pc-ip` si l'agent annonce une mauvaise IP. Les réglages vidéo (`resolution`, `fps`, `bitrate_kbps`, `encoder`) se règlent dans `config.json`, comme dans le mode normal.
+
 ---
 
 ## Sommaire
@@ -470,6 +519,9 @@ schtasks /create /tn "FreeStream" /sc onlogon /rl highest /tr "\"C:\chemin\vers\
 | `input.profile` | `manette` | Profil actif au démarrage |
 | `app.pause_keys` | `["Menu"]` | Touches qui ouvrent le menu pause |
 | `app.back_long_press_ms` | `1500` | Appui long sur Retour pour le menu pause (`0` = désactivé) |
+| `freebox.host` | `http://mafreebox.freebox.fr` | Adresse de Freebox OS (mode express) |
+| `freebox.receiver` | `Freebox Player` | Nom du récepteur AirMedia |
+| `freebox.receiver_password` | `""` | Mot de passe AirMedia, s'il est défini sur le Player |
 | `probe.modules` | liste | Modules testés par la sonde. **Ajoutez-y les modules `fbx.*`** trouvés dans la doc du SDK |
 
 ### 13.2 App (*Réglages* sur le Player)
@@ -482,6 +534,8 @@ Transport, variante d'URL, résolution, i/s, débit, audio, statistiques, resync
 python -m freestream [--config FICHIER] [--port N] [--encoder auto|nvenc|amf|qsv|x264]
                      [--source auto|ddagrab|gdigrab|testsrc] [--input-backend auto|vigem|sendinput|log]
                      [--list-encoders] [--print-cmd TRANSPORT IP_PLAYER] [--no-pin] [-v]
+                     [--freebox-pair] [--cast [TRANSPORT]] [--cast-try-all]
+                     [--receiver NOM] [--player-ip IP] [--pc-ip IP] [--url-index N]
 ```
 
 ---
@@ -502,6 +556,9 @@ python -m freestream [--config FICHIER] [--port N] [--encoder auto|nvenc|amf|qsv
 | Touche qui reste enfoncée | La télécommande n'envoie pas de relâchement | Baissez `hold_timeout_ms` |
 | Manette virtuelle non vue par le jeu | ViGEmBus absent | Installez ViGEmBus, redémarrez ; testez avec `joy.cpl` (Win+R) |
 | Encodeur `x264` choisi alors que j'ai une carte NVIDIA | Pilote trop ancien | Mettez à jour le pilote graphique ; `--list-encoders` |
+| Mode express : « pas encore appairé » | Jeton Freebox OS absent | `scripts\cast.bat pair`, puis acceptez sur l'écran de la Freebox Server |
+| Mode express : « récepteur AirMedia introuvable » | Player éteint, AirMedia désactivé, autre nom | Allumez le Player, activez AirMedia, ou passez `--receiver "Nom affiché"` |
+| Mode express : rien ne s'affiche | Format refusé par le lecteur natif, ou mauvaise IP du PC annoncée | `scripts\cast.bat test` ; `--pc-ip` ; pare-feu (§2.5) |
 | L'app ne démarre pas sur le Player | Module manquant ou version de Qt | Sortie de l'application dans Qt Creator ; `docs/ANALYSE.md` §9 |
 
 ---
