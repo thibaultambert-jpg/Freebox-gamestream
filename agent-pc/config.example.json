@@ -1,0 +1,48 @@
+{
+  "name": "PC-Salon",
+  "http_port": 8765,
+  "pin": null,
+  "ffmpeg": "C:/ffmpeg/bin/ffmpeg.exe",
+  "video": {
+    "source": "ddagrab",
+    "encoder": "auto",
+    "codec": "h264",
+    "resolution": "1280x720",
+    "fps": 60,
+    "bitrate_kbps": 12000,
+    "gop": 60,
+    "vbv_frames": 3
+  },
+  "audio": {
+    "enabled": false,
+    "device": "CABLE Output (VB-Audio Virtual Cable)",
+    "codec": "aac",
+    "bitrate_kbps": 160
+  },
+  "transport": {
+    "mode": "udp",
+    "port": 1234
+  },
+  "input": {
+    "backend": "auto",
+    "profile": "manette",
+    "hold_timeout_ms": 600,
+    "profiles": {
+      "mon-jeu": {
+        "Up": "key:W",
+        "Down": "key:S",
+        "Left": "key:A",
+        "Right": "key:D",
+        "Select": "key:SPACE",
+        "Back": "key:ESC",
+        "code:16777264": "key:F1"
+      }
+    }
+  },
+  "app": {
+    "pause_keys": [
+      "Menu"
+    ],
+    "back_long_press_ms": 1500
+  }
+}

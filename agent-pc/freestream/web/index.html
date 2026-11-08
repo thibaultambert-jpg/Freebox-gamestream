@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent FreeStream</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 16px; line-height: 1.5; }
+  code, pre { background: rgba(127,127,127,.15); padding: 2px 4px; border-radius: 4px; }
+  pre { padding: 8px; overflow-x: auto; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>Agent FreeStream</h1>
+<p id="info">Chargement…</p>
+<ul>
+  <li><a href="/clock">Chronomètre de mesure de latence</a> (à mettre en plein écran)</li>
+  <li><a href="/api/info">/api/info</a> — informations publiques</li>
+</ul>
+<p>Le code PIN d'appairage est affiché dans la console de l'agent.</p>
+<script>
+  // Affiche quelques infos de l'agent
+  fetch('/api/info').then(function (r) { return r.json(); }).then(function (i) {
+    document.getElementById('info').innerHTML =
+      '<b>' + i.name + '</b> — v' + i.version + ' — encodeur <code>' + i.encoder +
+      '</code> — source <code>' + i.source + '</code> — transport par défaut <code>' +
+      i.defaults.transport + '</code>';
+  });
+</script>
+</body>
+</html>

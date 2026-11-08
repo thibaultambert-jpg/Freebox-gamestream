@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+agent-pc/config.json
+agent-pc/.freestream_tokens.json
+agent-pc/probe-results/
+*.qmlc
+*.jsc
+build-*/
+*.user

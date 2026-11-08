@@ -1,0 +1,4 @@
+# Dépendances de l'agent FreeStream
+aiohttp>=3.9
+# Manette Xbox virtuelle (Windows uniquement, nécessite le pilote ViGEmBus)
+vgamepad>=0.1.0; sys_platform == "win32"

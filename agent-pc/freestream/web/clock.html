@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chrono FreeStream</title>
+<style>
+  /* Page de mesure de latence : à afficher en plein écran (F11) sur l'écran capturé. */
+  html, body { margin: 0; height: 100%; background: #000; color: #fff;
+               font-family: Consolas, "DejaVu Sans Mono", monospace; overflow: hidden; }
+  #wrap { display: grid; grid-template-rows: 1fr auto; height: 100%; }
+  #clock { display: flex; align-items: center; justify-content: center;
+           font-size: 18vw; font-weight: bold; letter-spacing: -0.03em; }
+  #bar { display: flex; gap: 2vw; padding: 1.5vw; font-size: 2.2vw; background: #111; }
+  #flash { width: 12vw; height: 6vw; background: #222; border: 2px solid #555; }
+  #flash.on { background: #fff; }
+  #frame { margin-left: auto; color: #8f8; }
+  .hint { color: #aaa; font-size: 1.6vw; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="clock">00:00.000</div>
+  <div id="bar">
+    <div id="flash" title="S'allume quand une touche de la Freebox arrive sur le PC"></div>
+    <div>Dernière touche : <span id="last">—</span><br>
+      <span class="hint">Mesure vidéo : photographiez le PC et la TV ensemble, soustrayez les deux chronos.
+      Mesure entrée→image : filmez la télécommande et la TV au ralenti (240 i/s).</span></div>
+    <div id="frame">0 i/s</div>
+  </div>
+</div>
+<script>
+  // Chronomètre en millisecondes rafraîchi à chaque image de l'écran
+  var clockEl = document.getElementById('clock');
+  var frameEl = document.getElementById('frame');
+  var frames = 0, lastFps = performance.now();
+  function pad(n, w) { n = String(n); while (n.length < w) n = '0' + n; return n; }
+  function tick(now) {
+    var d = new Date();
+    clockEl.textContent = pad(d.getMinutes(), 2) + ':' + pad(d.getSeconds(), 2) + '.' + pad(d.getMilliseconds(), 3);
+    frames++;
+    if (now - lastFps >= 1000) { frameEl.textContent = frames + ' i/s'; frames = 0; lastFps = now; }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  // Flash blanc à la réception d'une entrée (événements SSE de l'agent)
+  var flash = document.getElementById('flash'), last = document.getElementById('last');
+  var es = new EventSource('/api/events');
+  es.onmessage = function (m) {
+    var ev = JSON.parse(m.data);
+    if (ev.d === 0) return;  // on ne flashe que sur l'appui
+    flash.className = 'on';
+    last.textContent = (ev.k || ev.name || '?') + (ev.action ? ' → ' + ev.action : '');
+    setTimeout(function () { flash.className = ''; }, 120);
+  };
+</script>
+</body>
+</html>
